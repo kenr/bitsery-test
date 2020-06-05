@@ -1,8 +1,8 @@
 #include "catch.hpp"
 #include "fmt/format.h"
 
-#include "sdfu/sdfu_codec.h"
-#include "sdfu/sdfu_types.h"
+#include "sdfu_codec.h"
+#include "sdfu_types.h"
 
 using namespace NRFDL::SDFU;
 
@@ -15,7 +15,7 @@ namespace
         SECTION("Encode requests")
         {
             DfuRequest req;
-            NRFDL::data_t data;
+            std::vector<uint8_t> data;
 
             req.opcode   = DfuOpcode::NRF_DFU_OP_MTU_GET;
             req.mtu.size = 100;
@@ -29,8 +29,6 @@ namespace
             REQUIRE(data.size() == 2);
 
             req.opcode = DfuOpcode::NRF_DFU_OP_OBJECT_WRITE;
-            req.write.data.push_back(0);
-            req.write.len = 10;
 
             REQUIRE(codec.encode(req, data) == NRFDL_ERR_NONE);
             REQUIRE(data.size() == 13);
@@ -38,7 +36,7 @@ namespace
 
         SECTION("Decode responses")
         {
-            NRFDL::data_t input{
+            std::vector<uint8_t> input{
                 static_cast<std::underlying_type<DfuOpcode>::type>(DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION),
                 static_cast<std::underlying_type<DfuResult>::type>(DfuResult::NRF_DFU_RES_CODE_OPERATION_FAILED),
                 static_cast<std::underlying_type<DfuFirmwareType>::type>(

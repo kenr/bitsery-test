@@ -1,6 +1,10 @@
 #pragma once
 
-#include "nrfdl_backend_types.h"
+
+#include <vector>
+
+using data_t = std::vector<uint8_t>;
+
 #include "nrfdl_types.h"
 #include "sdfu_types.h"
 
