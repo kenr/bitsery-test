@@ -18,18 +18,22 @@ namespace
             std::vector<uint8_t> data;
 
             req.opcode   = DfuOpcode::NRF_DFU_OP_MTU_GET;
-            req.mtu.size = 100;
+            //req.mtu.size = 100;
+            DfuRequestMtu mtu;
+            mtu.size = 100;
+            req.request = mtu;
 
             REQUIRE(codec.encode(req, data) == NRFDL_ERR_NONE);
             REQUIRE(data.size() == 3);
 
             req.opcode                = DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION;
-            req.firmware.image_number = 5;
+            DfuRequestFirmware firmware;
+            firmware.image_number = 5;
+            req.request = firmware;
             REQUIRE(codec.encode(req, data) == NRFDL_ERR_NONE);
             REQUIRE(data.size() == 2);
 
             req.opcode = DfuOpcode::NRF_DFU_OP_OBJECT_WRITE;
-
             REQUIRE(codec.encode(req, data) == NRFDL_ERR_NONE);
             REQUIRE(data.size() == 13);
         }

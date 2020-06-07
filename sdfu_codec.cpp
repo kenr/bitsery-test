@@ -23,7 +23,7 @@ namespace NRFDL::SDFU
         _logger = spdlog::default_logger();
     }
 
-    auto Codec::encode(const DfuRequest & request, data_t & packet) -> nrfdl_errorcode_t
+    auto Codec::encode(const DfuRequestWrapper & request, data_t & packet) -> nrfdl_errorcode_t
     {
         using OutputAdapter = bitsery::OutputBufferAdapter<data_t, BitseryConfig>;
         auto writtenSize    = bitsery::quickSerialization<OutputAdapter>(packet, request);

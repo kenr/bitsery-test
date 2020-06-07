@@ -126,7 +126,7 @@ namespace NRFDL::SDFU
 
     template <typename S> void serialize(S & s, DfuRequestWrite & o)
     {
-        s.container(o.data, bitsery::FtorExtObject<bitsery::ext::MyExtension>{});
+        s.object(o.data); // , bitsery::FtorExtObject<bitsery::ext::MyExtension>{});
         s.value2b(o.len);
     };
 
@@ -145,10 +145,21 @@ namespace NRFDL::SDFU
         s.value4b(o.target);
     };
 
+    template <typename S> void serialize(S &s, DfuRequestWrapper & o)
+    {
+        
+    }
+
     template <typename S> void serialize(S & s, DfuRequest & o)
     {
         s.value1b(o.opcode);
 
+        if(o.request)
+        {
+            s.object(o.request, bitsery::FtorExtObject<bitsery::ext::MyExtension>{});
+        }
+
+#if 0
         // Requests without extra arguments are not extending the object
         switch (o.opcode)
         {
@@ -174,7 +185,11 @@ namespace NRFDL::SDFU
                 s.object(o.ping);
                 break;
         }
+#endif
+
+        
     }
+
 } // namespace NRFDL::SDFU
 
 namespace bitsery
@@ -197,5 +212,15 @@ namespace bitsery
                           << "\n";
             }
         };
-    } // namespace ext
+    };
+
+    namespace traits {
+        template<typename T>
+        struct ExtensionTraits<ext::MyExtension, T> {
+            using TValue = void;
+            static constexpr bool SupportValueOverload = false;
+            static constexpr bool SupportObjectOverload = true;
+            static constexpr bool SupportLambdaOverload = false;
+        };
+    }
 } // namespace bitsery

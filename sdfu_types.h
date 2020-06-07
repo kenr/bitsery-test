@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <variant>
+#include <vector>
+#include <optional>
 
 namespace NRFDL::SDFU
 {
@@ -202,7 +204,7 @@ namespace NRFDL::SDFU
     struct DfuRequestWrite
     {
         DfuRequestWrite(){};
-        uint8_t * data;
+        std::vector<uint8_t> data;
         uint16_t len;
     };
 
@@ -230,22 +232,39 @@ namespace NRFDL::SDFU
         uint32_t target;
     };
 
+    using DfuRequestType = std::variant<
+        DfuRequestFirmware,
+        DfuRequestSelect,
+        DfuRequestCreate,
+        DfuRequestWrite,
+        DfuRequestPing,
+        DfuRequestMtu,
+        DfuRequestPrn>;
+
+
     /**
      *@brief DFU request.
      */
+    struct DfuRequestWrapper
+    {
+        DfuRequestWrapper()
+        {
+        }
+
+        ~DfuRequestWrapper()
+        {
+        }
+        DfuRequest request;
+    };
+
     struct DfuRequest
     {
-        DfuRequest()
-            : write{}
-        {
-        }
-
-        ~DfuRequest()
-        {
-        }
-
         DfuOpcode opcode;
+        std::optional<DfuRequestType> request;
+    };
 
+
+#if 0
         union
         {
             DfuRequestFirmware firmware;
@@ -256,5 +275,6 @@ namespace NRFDL::SDFU
             DfuRequestMtu mtu;
             DfuRequestPrn prn;
         };
+#endif
     };
 } // namespace NRFDL::SDFU
