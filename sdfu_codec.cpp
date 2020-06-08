@@ -32,7 +32,7 @@ namespace NRFDL::SDFU
         return NRFDL_ERR_NONE;
     }
 
-    auto Codec::decode(const data_t & packet, DfuResponse & response) -> nrfdl_errorcode_t
+    auto Codec::decode(const data_t & packet, DfuResponseWrapper & response) -> nrfdl_errorcode_t
     {
         using InputAdapter = bitsery::InputBufferAdapter<data_t, BitseryConfig>;
 

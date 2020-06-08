@@ -76,36 +76,52 @@ namespace NRFDL::SDFU
         s.value1b(o.opcode);
         s.value1b(o.result);
 
-        switch (o.opcode)
+        if (o.response.has_value())
         {
-            case DfuOpcode::NRF_DFU_OP_PROTOCOL_VERSION:
-                s.object(o.protocol);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_CREATE:
-                s.object(o.create);
-                break;
-            case DfuOpcode::NRF_DFU_OP_CRC_GET:
-                s.object(o.crc);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_SELECT:
-                s.object(o.select);
-                break;
-            case DfuOpcode::NRF_DFU_OP_MTU_GET:
-                s.object(o.mtu);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_WRITE:
-                s.object(o.write);
-                break;
-            case DfuOpcode::NRF_DFU_OP_PING:
-                s.object(o.ping);
-                break;
-            case DfuOpcode::NRF_DFU_OP_HARDWARE_VERSION:
-                s.object(o.hardware);
-                break;
-            case DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION:
-                s.object(o.firmware);
-                break;
+            switch (o.opcode)
+            {
+                case DfuOpcode::NRF_DFU_OP_PROTOCOL_VERSION:
+                    s.object(std::get<DfuResponseProtocol>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_OBJECT_CREATE:
+                    s.object(std::get<DfuResponseCreate>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_RECEIPT_NOTIF_SET:
+                    break;
+                case DfuOpcode::NRF_DFU_OP_CRC_GET:
+                    s.object(std::get<DfuResponseCrc>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_OBJECT_EXECUTE:
+                    break;
+                case DfuOpcode::NRF_DFU_OP_OBJECT_SELECT:
+                    s.object(std::get<DfuResponseSelect>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_MTU_GET:
+                    s.object(std::get<DfuResponseSelect>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_OBJECT_WRITE:
+                    s.object(std::get<DfuResponseWrite>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_PING:
+                    s.object(std::get<DfuResponsePing>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_HARDWARE_VERSION:
+                    s.object(std::get<DfuResponseHardware>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION:
+                    s.object(std::get<DfuResponseFirmware>(*o.response));
+                    break;
+                case DfuOpcode::NRF_DFU_OP_ABORT:
+                case DfuOpcode::NRF_DFU_OP_RESPONSE:
+                case DfuOpcode::NRF_DFU_OP_INVALID:
+                    break;
+            }
         }
+    };
+
+    template <typename S> void serialize(S & s, DfuResponseWrapper & o)
+    {
+        s.object(o.rsp, bitsery::FtorExtObject<bitsery::ext::DfuResponseExtension>{});
     }
 
     template <typename S> void serialize(S & s, DfuRequestFirmware & o)
@@ -126,7 +142,8 @@ namespace NRFDL::SDFU
 
     template <typename S> void serialize(S & s, DfuRequestWrite & o)
     {
-        s.object(o.data); // , bitsery::FtorExtObject<bitsery::ext::MyExtension>{});
+        // TODO: fix removal of 1 byte additional length
+        s.container1b(o.data, std::numeric_limits<uint16_t>::max());
         s.value2b(o.len);
     };
 
@@ -145,82 +162,123 @@ namespace NRFDL::SDFU
         s.value4b(o.target);
     };
 
-    template <typename S> void serialize(S &s, DfuRequestWrapper & o)
+    template <typename S> void serialize(S & s, DfuRequestWrapper & o)
     {
-        
+        s.object(o.req, bitsery::FtorExtObject<bitsery::ext::DfuRequestExtension>{});
     }
-
-    template <typename S> void serialize(S & s, DfuRequest & o)
-    {
-        s.value1b(o.opcode);
-
-        if(o.request)
-        {
-            s.object(o.request, bitsery::FtorExtObject<bitsery::ext::MyExtension>{});
-        }
-
-#if 0
-        // Requests without extra arguments are not extending the object
-        switch (o.opcode)
-        {
-            case DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION:
-                s.object(o.firmware);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_CREATE:
-                s.object(o.create);
-                break;
-            case DfuOpcode::NRF_DFU_OP_RECEIPT_NOTIF_SET:
-                s.object(o.prn);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_SELECT:
-                s.object(o.select);
-                break;
-            case DfuOpcode::NRF_DFU_OP_MTU_GET:
-                s.object(o.mtu);
-                break;
-            case DfuOpcode::NRF_DFU_OP_OBJECT_WRITE:
-                s.object(o.write);
-                break;
-            case DfuOpcode::NRF_DFU_OP_PING:
-                s.object(o.ping);
-                break;
-        }
-#endif
-
-        
-    }
-
 } // namespace NRFDL::SDFU
 
 namespace bitsery
 {
     namespace ext
     {
-        class MyExtension
+        class DfuRequestExtension
         {
           public:
             template <typename Ser, typename T, typename Fnc> void serialize(Ser & ser, const T & obj, Fnc && fnc) const
             {
-                std::cout << "SERIALIZE"
-                          << "\n";
+                // TODO: check that this function is receving the wrapper
+                ser.value1b(obj.opcode);
+
+                switch (obj.opcode)
+                {
+                    case DfuOpcode::NRF_DFU_OP_FIRMWARE_VERSION:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestFirmware>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_OBJECT_CREATE:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestCreate>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_RECEIPT_NOTIF_SET:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestPrn>(*(obj.request)));
+                        }
+                        break;
+
+                    case DfuOpcode::NRF_DFU_OP_OBJECT_SELECT:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestSelect>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_MTU_GET:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestMtu>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_OBJECT_WRITE:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestWrite>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_PING:
+                        if (obj.request)
+                        {
+                            ser.object(std::get<DfuRequestPing>(*(obj.request)));
+                        }
+                        break;
+                    case DfuOpcode::NRF_DFU_OP_OBJECT_EXECUTE:
+                    case DfuOpcode::NRF_DFU_OP_HARDWARE_VERSION:
+                    case DfuOpcode::NRF_DFU_OP_ABORT:
+                    case DfuOpcode::NRF_DFU_OP_RESPONSE:
+                    case DfuOpcode::NRF_DFU_OP_INVALID:
+                    case DfuOpcode::NRF_DFU_OP_PROTOCOL_VERSION:
+                    case DfuOpcode::NRF_DFU_OP_CRC_GET:
+                        // opcodes without any extra arguments
+                        break;
+                }
             }
 
-            template <typename Des, typename T, typename Fnc>
-            void deserialize(Des & des, NRFDL::SDFU::DfuRequest & obj, Fnc && fnc) const
+            // template <typename Des, typename T, typename Fnc> void deserialize(Des & des, T & obj, Fnc && fnc) const
+            template <typename Des, typename T, typename Fnc> void deserialize(Des & des, T & obj, Fnc && fnc) const
             {
-                std::cout << "DESERIALIZE"
-                          << "\n";
+                T res{};
+                fnc(des, res);
             }
         };
-    };
 
-    namespace traits {
-        template<typename T>
-        struct ExtensionTraits<ext::MyExtension, T> {
-            using TValue = void;
-            static constexpr bool SupportValueOverload = false;
+        class DfuResponseExtension
+        {
+          public:
+            template <typename Ser, typename T, typename Fnc> void serialize(Ser & ser, const T & obj, Fnc && fnc) const
+            {
+                // TODO: throw an exception, shall not be used
+            }
+
+            // template <typename Des, typename T, typename Fnc> void deserialize(Des & des, T & obj, Fnc && fnc) const
+            template <typename Des, typename T, typename Fnc> void deserialize(Des & des, T & obj, Fnc && fnc) const
+            {
+                T res{};
+                fnc(des, res);
+            }
+        };
+    }; // namespace ext
+
+    namespace traits
+    {
+        template <typename T> struct ExtensionTraits<ext::DfuRequestExtension, T>
+        {
+            using TValue                                = DfuRequestWrapper;
+            static constexpr bool SupportValueOverload  = false;
             static constexpr bool SupportObjectOverload = true;
             static constexpr bool SupportLambdaOverload = false;
         };
-    }
+
+        template <typename T> struct ExtensionTraits<ext::DfuResponseExtension, T>
+        {
+            using TValue                                = DfuResponse;
+            static constexpr bool SupportValueOverload  = false;
+            static constexpr bool SupportObjectOverload = true;
+            static constexpr bool SupportLambdaOverload = false;
+        };
+
+    } // namespace traits
 } // namespace bitsery

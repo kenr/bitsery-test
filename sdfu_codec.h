@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <vector>
 
 using data_t = std::vector<uint8_t>;
@@ -20,7 +19,7 @@ namespace NRFDL::SDFU
         Codec();
 
         auto encode(const DfuRequestWrapper & request, data_t & data) -> nrfdl_errorcode_t;
-        auto decode(const data_t & data, DfuResponse & response) -> nrfdl_errorcode_t;
+        auto decode(const data_t & data, DfuResponseWrapper & response) -> nrfdl_errorcode_t;
 
       private:
         std::shared_ptr<spdlog::logger> _logger;

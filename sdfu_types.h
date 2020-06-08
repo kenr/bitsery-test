@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <variant>
 #include <vector>
-#include <optional>
 
 namespace NRFDL::SDFU
 {
@@ -152,25 +152,32 @@ namespace NRFDL::SDFU
         uint16_t size;
     };
 
+    using DfuResponseType = std::variant<DfuResponseProtocol,
+                                         DfuResponseHardware,
+                                         DfuResponseFirmware,
+                                         DfuResponseSelect,
+                                         DfuResponseCreate,
+                                         DfuResponseWrite,
+                                         DfuResponseCrc,
+                                         DfuResponsePing,
+                                         DfuResponseMtu>;
+
     /**
      * @brief DFU response message.
      */
     struct DfuResponse
     {
+        DfuResponse()  = default;
+        ~DfuResponse() = default;
+
         DfuOpcode opcode;
         DfuResult result;
-        union
-        {
-            DfuResponseProtocol protocol;
-            DfuResponseHardware hardware;
-            DfuResponseFirmware firmware;
-            DfuResponseSelect select;
-            DfuResponseCreate create;
-            DfuResponseWrite write;
-            DfuResponseCrc crc;
-            DfuResponsePing ping;
-            DfuResponseMtu mtu;
-        };
+        std::optional<DfuResponseType> response;
+    };
+
+    struct DfuResponseWrapper
+    {
+        DfuResponse rsp;
     };
 
     /**
@@ -232,49 +239,25 @@ namespace NRFDL::SDFU
         uint32_t target;
     };
 
-    using DfuRequestType = std::variant<
-        DfuRequestFirmware,
-        DfuRequestSelect,
-        DfuRequestCreate,
-        DfuRequestWrite,
-        DfuRequestPing,
-        DfuRequestMtu,
-        DfuRequestPrn>;
-
+    using DfuRequestType = std::variant<DfuRequestFirmware,
+                                        DfuRequestSelect,
+                                        DfuRequestCreate,
+                                        DfuRequestWrite,
+                                        DfuRequestPing,
+                                        DfuRequestMtu,
+                                        DfuRequestPrn>;
 
     /**
      *@brief DFU request.
      */
-    struct DfuRequestWrapper
-    {
-        DfuRequestWrapper()
-        {
-        }
-
-        ~DfuRequestWrapper()
-        {
-        }
-        DfuRequest request;
-    };
-
     struct DfuRequest
     {
         DfuOpcode opcode;
         std::optional<DfuRequestType> request;
     };
 
-
-#if 0
-        union
-        {
-            DfuRequestFirmware firmware;
-            DfuRequestSelect select;
-            DfuRequestCreate create;
-            DfuRequestWrite write;
-            DfuRequestPing ping;
-            DfuRequestMtu mtu;
-            DfuRequestPrn prn;
-        };
-#endif
+    struct DfuRequestWrapper
+    {
+        DfuRequest req;
     };
 } // namespace NRFDL::SDFU
