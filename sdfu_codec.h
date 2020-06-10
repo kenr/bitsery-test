@@ -18,8 +18,8 @@ namespace NRFDL::SDFU
       public:
         Codec();
 
-        auto encode(const DfuRequestWrapper & request, data_t & data) -> nrfdl_errorcode_t;
-        auto decode(const data_t & data, DfuResponseWrapper & response) -> nrfdl_errorcode_t;
+        auto encode(const DfuRequest & request, data_t & data) -> nrfdl_errorcode_t;
+        auto decode(const data_t & data, DfuResponse & response) -> nrfdl_errorcode_t;
 
       private:
         std::shared_ptr<spdlog::logger> _logger;

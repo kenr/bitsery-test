@@ -175,11 +175,6 @@ namespace NRFDL::SDFU
         std::optional<DfuResponseType> response;
     };
 
-    struct DfuResponseWrapper
-    {
-        DfuResponse rsp;
-    };
-
     /**
      * @brief @ref NRF_DFU_OP_FIRMWARE_VERSION request details.
      */
@@ -254,10 +249,5 @@ namespace NRFDL::SDFU
     {
         DfuOpcode opcode;
         std::optional<DfuRequestType> request;
-    };
-
-    struct DfuRequestWrapper
-    {
-        DfuRequest req;
     };
 } // namespace NRFDL::SDFU
